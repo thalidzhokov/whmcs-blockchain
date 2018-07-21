@@ -127,8 +127,8 @@ function _generateSecret($invoiceId = 0, $amount = 0)
 	if (!empty($invoiceId) && is_numeric($invoiceId) &&
 		!empty($amount) && is_numeric($amount)
 	) {
-		$secret = 'I' . intval($invoiceId);
-		$secret .= 'A' . intval($amount);
+		$secret = 'I' . preg_replace('/\D/', '', $invoiceId);
+		$secret .= 'A' . preg_replace('/\D/', '', $amount);
 		$secret .= 'X';
 
 		// Random add 16 characters
