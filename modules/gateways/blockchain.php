@@ -57,19 +57,26 @@ function blockchain_link($params)
 
 	_createTable();
 
-	$amount = _getAmount($params['currency'], $params['amount']);
+    $paymentData = _getPaymentData($params['invoiceid']);
 
+    // Get amount
+    if (!empty($paymentData['amount'])) {
+        $amount = $paymentData['amount'];
+    } else {
+        $amount = _getAmount($params['currency'], $params['amount']);
+    }
+
+    // Validate amount
 	if (!is_numeric($amount)) {
 		return "Can't get exchange rates. Please try another payment method or open a ticket.";
 	}
 
-	// https://support.blockchain.com/hc/en-us/articles/210354003-What-is-the-minimum-amount-I-can-send-
+	// Check amount size https://support.blockchain.com/hc/en-us/articles/210354003-What-is-the-minimum-amount-I-can-send-
 	if ($amount < 0.00000547) {
 		return "Transaction amount too low. Please try another payment method or open a ticket.";
 	}
 
-	$paymentData = _getPaymentData($params['invoiceid']);
-
+	// Get
 	if (empty($paymentData['address'])) {
 		$secret = _generateSecret($params['invoiceid'], $amount);
 
