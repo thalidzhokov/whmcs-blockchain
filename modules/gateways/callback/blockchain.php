@@ -4,7 +4,8 @@ require_once __DIR__ . '/../../../init.php';
 require_once __DIR__ . '/../../../includes/functions.php';
 require_once __DIR__ . '/../../../includes/gatewayfunctions.php';
 require_once __DIR__ . '/../../../includes/invoicefunctions.php';
-require_once __DIR__ . '/../blockchain/BlockchainDB.php';
+require_once __DIR__ . '/../blockchain/Blockchain_DB.php';
+require_once __DIR__ . '/../blockchain/Blockchain_Helpers.php';
 
 
 use WHMCS\Database\Capsule;
@@ -23,7 +24,7 @@ if (empty($_GET['address']) || empty($_GET['secret'])) {
 }
 
 // Get payment data
-$DB = new BlockchainDB();
+$DB = new Blockchain_DB();
 $query = 'SELECT * FROM blockchain_payments WHERE address=%s AND secret=%s';
 $q = $DB->fetch_assoc($DB->mysqlQuery($query, $_GET['address'], $_GET['secret']));
 if (!$q) {

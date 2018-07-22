@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Class BlockchainDB
+ * Class Blockchain_DB
  */
-class BlockchainDB
+class Blockchain_DB
 {
 	public static $FETCH_ASSOC = 'assoc';
 	public static $FETCH_ARRAY = 'array';
@@ -13,7 +13,7 @@ class BlockchainDB
 	private $db_name;
 
 	/**
-	 * BlockchainDB constructor.
+	 * Blockchain_DB constructor.
 	 */
 	function __construct()
 	{

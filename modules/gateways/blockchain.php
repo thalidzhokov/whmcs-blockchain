@@ -4,7 +4,8 @@ require_once __DIR__ . '/../../init.php';
 require_once __DIR__ . '/../../includes/functions.php';
 require_once __DIR__ . '/../../includes/gatewayfunctions.php';
 require_once __DIR__ . '/../../includes/invoicefunctions.php';
-require_once __DIR__ . '/blockchain/BlockchainDB.php';
+require_once __DIR__ . '/blockchain/Blockchain_DB.php';
+require_once __DIR__ . '/blockchain/Blockchain_Helpers.php';
 
 use WHMCS\Database\Capsule;
 
@@ -16,131 +17,6 @@ if (!$gateway['type']) {
 }
 
 // FUNCTIONS
-/**
- * @param int $invoiceId
- * @return array|null
- */
-function _getPaymentData($invoiceId = 0)
-{
-	$DB = new BlockchainDB();
-
-	$query = 'SELECT * FROM blockchain_payments WHERE invoice_id=%s';
-	$rtn = $DB->fetch_assoc($DB->mysqlQuery($query, $invoiceId));
-
-	return $rtn;
-}
-
-/**
- * @param int $invoiceId
- * @param int $amount
- * @param string $address
- * @param string $secret
- * @return bool|mysqli_result
- */
-function _setPaymentData($invoiceId = 0, $amount = 0, $address = '', $secret = '')
-{
-	$DB = new BlockchainDB();
-
-	$query = 'INSERT INTO blockchain_payments SET invoice_id=%s,  amount=%s,address=%s,secret=%s';
-	$rtn = $DB->mysqlQuery($query, $invoiceId, $amount, $address, $secret);
-
-	return $rtn;
-}
-
-/**
- * @return bool|mysqli_result
- */
-function _createTable()
-{
-	$DB = new BlockchainDB();
-
-	$query = 'CREATE TABLE IF NOT EXISTS blockchain_payments (
-invoice_id int(11) NOT NULL, 
-amount float(11,8) NOT NULL, 
-address varchar(64) NOT NULL, 
-secret varchar(64) NOT NULL, 
-confirmations int(11) NOT NULL DEFAULT 0, 
-status enum("unpaid", "confirming", "paid") NOT NULL DEFAULT "unpaid", 
-PRIMARY KEY (invoice_id)
-)';
-	$rtn = $DB->mysqlQuery($query);
-
-	return $rtn;
-}
-
-/**
- * @param string $currency
- * @param int $amount
- * @return bool|mixed
- */
-function _getAmount($currency = '', $amount = 0)
-{
-	$url = "https://www.blockchain.com/tobtc?currency={$currency}&value={$amount}";
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, $url);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, True);
-	$response = curl_exec($ch);
-	$status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-	curl_close($ch);
-
-	if (in_array($status, [200, 301]) && is_numeric($response)) {
-		return $response;
-	} else {
-		return False;
-	}
-}
-
-/**
- * @param string $xpub
- * @param string $key
- * @return bool|mixed
- */
-function _getGap($xpub = '', $key = '')
-{
-	$url = "https://api.blockchain.info/v2/receive/checkgap?xpub={$xpub}&key={$key}";
-
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, $url);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	$response = curl_exec($ch);
-	$status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-	curl_close($ch);
-
-	if (in_array($status, [200, 301]) && is_string($response)) {
-		$response = json_decode($response);
-
-		return $response->gap;
-	} else {
-		return False;
-	}
-}
-
-/**
- * @param int $invoiceId
- * @param int $amount
- * @return string
- */
-function _generateSecret($invoiceId = 0, $amount = 0)
-{
-	$secret = False;
-
-	if (!empty($invoiceId) && is_numeric($invoiceId) &&
-		!empty($amount) && is_numeric($amount)
-	) {
-		$secret = 'I' . preg_replace('/\D/', '', $invoiceId);
-		$secret .= 'A' . preg_replace('/\D/', '', $amount);
-		$secret .= 'X';
-
-		// Random add 16 characters
-		$characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-		for($i = 0; $i < 16; $i++) {
-			$secret .= substr($characters, rand(0, strlen($characters) - 1), 1);
-		}
-	}
-
-	return $secret;
-}
-
 /**
  * @return array
  */
