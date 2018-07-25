@@ -7,7 +7,6 @@ require_once __DIR__ . '/../../includes/invoicefunctions.php';
 require_once __DIR__ . '/blockchain/Blockchain_DB.php';
 require_once __DIR__ . '/blockchain/Blockchain_Helpers.php';
 
-use WHMCS\Database\Capsule;
 
 $gatewayModule = basename(__FILE__, '.php');
 $gateway = getGatewayVariables($gatewayModule);
