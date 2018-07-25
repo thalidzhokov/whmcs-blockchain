@@ -57,16 +57,16 @@ function blockchain_link($params)
 
 	_createTable();
 
-    $paymentData = _getPaymentData($params['invoiceid']);
+	$paymentData = _getPaymentDataByInvoiceId($params['invoiceid']);
 
-    // Get amount
-    if (!empty($paymentData['amount'])) {
-        $amount = $paymentData['amount'];
-    } else {
-        $amount = _getAmount($params['currency'], $params['amount']);
-    }
+	// Get amount
+	if (!empty($paymentData['amount'])) {
+		$amount = $paymentData['amount'];
+	} else {
+		$amount = _getAmount($params['currency'], $params['amount']);
+	}
 
-    // Validate amount
+	// Validate amount
 	if (!is_numeric($amount)) {
 		return "Can't get exchange rates. Please try another payment method or open a ticket.";
 	}
@@ -115,33 +115,33 @@ function blockchain_link($params)
 
 // SHOW INVOICE
 if ($_GET['show'] && is_numeric($_GET['show'])) {
-	$paymentData = _getPaymentData($_GET['show']);
+	$paymentData = _getPaymentDataByInvoiceId($_GET['show']);
 
 	// QR code string for BTC wallet apps
 	$qrString = "bitcoin:{$paymentData['address']}?amount={$paymentData['amount']}&label=" . urlencode($gateway['companyname'] . ' Invoice #' . $paymentData['invoice_id']); ?>
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Blockchain.com; Invoice #<?= $paymentData['invoice_id']; ?>;
-            Amount: <?= $paymentData['amount']; ?></title>
-        <script src="blockchain/jquery.min.js"></script>
-        <script src="blockchain/jquery.qrcode.min.js"></script>
-        <style>
-            body {
-                margin: 0;
-                padding: 0;
-                text-align: right;
-            }
-        </style>
-    </head>
-    <body>
-    <div id="qr-canvas"></div>
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<title>Blockchain.com; Invoice #<?= $paymentData['invoice_id']; ?>;
+			Amount: <?= $paymentData['amount']; ?></title>
+		<script src="blockchain/jquery.min.js"></script>
+		<script src="blockchain/jquery.qrcode.min.js"></script>
+		<style>
+			body {
+				margin: 0;
+				padding: 0;
+				text-align: right;
+			}
+		</style>
+	</head>
+	<body>
+	<div id="qr-canvas"></div>
 
-    Please send <a id="qr-string" href="<?= $qrString; ?>"><?= $paymentData['amount']; ?> BTC</a> to address<br>
-    <a href="https://www.blockchain.info/address/<?= $paymentData['address']; ?>"
-       target="_blank"><?= $paymentData['address']; ?></a>
+	Please send <a id="qr-string" href="<?= $qrString; ?>"><?= $paymentData['amount']; ?> BTC</a> to address<br>
+	<a href="https://www.blockchain.info/address/<?= $paymentData['address']; ?>"
+	   target="_blank"><?= $paymentData['address']; ?></a>
 
-    <script type="text/javascript">
+	<script type="text/javascript">
 		function generateQR() {
 			var $qrCanvas = $('#qr-canvas'),
 				$qrString = $('#qr-string').attr('href');
@@ -168,10 +168,10 @@ if ($_GET['show'] && is_numeric($_GET['show'])) {
 		}
 
 		checkStatus();
-    </script>
+	</script>
 
-    </body>
-    </html>
+	</body>
+	</html>
 
 
 	<?php
@@ -181,7 +181,7 @@ if ($_GET['show'] && is_numeric($_GET['show'])) {
 if ($_GET['check'] && is_numeric($_GET['check'])) {
 	header('Content-type: text/plain');
 
-	$paymentData = _getPaymentData($_GET['check']);
+	$paymentData = _getPaymentDataByInvoiceId($_GET['check']);
 
 	if ($paymentData['status'] == 'paid') {
 		$status = 'paid';

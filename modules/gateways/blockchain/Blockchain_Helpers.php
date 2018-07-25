@@ -29,12 +29,58 @@ PRIMARY KEY (invoice_id)
  * @param int $invoiceId
  * @return array|null
  */
-function _getPaymentData($invoiceId = 0)
+function _getPaymentDataByInvoiceId($invoiceId = 0)
 {
 	$DB = new Blockchain_DB();
 
 	$query = 'SELECT * FROM blockchain_payments WHERE invoice_id=%s';
 	$rtn = $DB->fetch_assoc($DB->mysqlQuery($query, $invoiceId));
+
+	return $rtn;
+}
+
+/**
+ * @param string $secret
+ * @param string $address
+ * @return array|null
+ */
+function _getPaymentDataBySecretAndAddress($secret = '', $address = '')
+{
+	$DB = new Blockchain_DB();
+
+	$query = 'SELECT * FROM blockchain_payments WHERE secret=%s AND address=%s';
+	$rtn = $DB->fetch_assoc($DB->mysqlQuery($query, $secret, $address));
+
+	return $rtn;
+}
+
+/**
+ * @param int $invoiceId
+ * @return array|null
+ */
+function _getWHMCSInvoice($invoiceId = 0)
+{
+	$DB = new Blockchain_DB();
+
+	$query = 'SELECT * FROM tblinvoices WHERE id=%s';
+	$rtn = $DB->fetch_assoc($DB->mysqlQuery($query, $invoiceId));
+
+	return $rtn;
+}
+
+/**
+ * @param string $transid
+ * @return array|null
+ */
+function _getWHMCSTransId($transid = '')
+{
+	$DB = new Blockchain_DB();
+
+	$query = 'SELECT * FROM tblaccounts WHERE transid=%s';
+	$rtn = $DB->fetch_assoc($DB->mysqlQuery($query, $transid));
+	$rtn = !empty($rtn['transid'])
+		? $rtn['transid']
+		: Null;
 
 	return $rtn;
 }
@@ -52,6 +98,22 @@ function _setPaymentData($invoiceId = 0, $amount = 0, $address = '', $secret = '
 
 	$query = 'INSERT INTO blockchain_payments SET invoice_id=%s,  amount=%s,address=%s,secret=%s';
 	$rtn = $DB->mysqlQuery($query, $invoiceId, $amount, $address, $secret);
+
+	return $rtn;
+}
+
+/**
+ * @param int $invoiceId
+ * @param int $confirmations
+ * @param string $status
+ * @return bool|mysqli_result
+ */
+function _setConfirmationsAndStatus($invoiceId = 0, $confirmations = 0, $status = '')
+{
+	$DB = new Blockchain_DB();
+
+	$query = 'UPDATE blockchain_payments SET confirmations=%s,status=%s WHERE invoice_id=%s';
+	$rtn = $DB->mysqlQuery($query, $confirmations, $status, $invoiceId);
 
 	return $rtn;
 }
@@ -121,7 +183,7 @@ function _generateSecret($invoiceId = 0, $amount = 0)
 
 		// Random add 16 characters
 		$characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-		for($i = 0; $i < 16; $i++) {
+		for ($i = 0; $i < 16; $i++) {
 			$secret .= substr($characters, rand(0, strlen($characters) - 1), 1);
 		}
 	}

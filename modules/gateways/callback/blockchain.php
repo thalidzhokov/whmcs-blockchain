@@ -17,60 +17,77 @@ if (!$gateway['type']) {
 	die("Module Not Activated");
 }
 
-// Check address or secret
-if (empty($_GET['address']) || empty($_GET['secret'])) {
+/*
+
+hash - The block hash.
+confirmations - The number of confirmations of this block.
+height - The block height.
+timestamp - The unix timestamp indicating when the block was added.
+size - The block size in bytes.
+{custom parameter} - Any parameters included in the callback URL will be passed back to the callback URL in the notification.
+
+ */
+
+// Check request parameters
+if (empty($_GET['secret']) ||
+	empty($_GET['address']) ||
+	empty($_GET['transaction_hash']) ||
+	empty($_GET['value']) ||
+	empty($_GET['confirmations'])
+) {
 	logTransaction($gateway['name'], $_GET, 'No address or secret');
-	exit('No address or secret');
+	exit('No secret, address or other data');
 }
 
 // Get payment data
-$DB = new Blockchain_DB();
-$query = 'SELECT * FROM blockchain_payments WHERE address=%s AND secret=%s';
-$q = $DB->fetch_assoc($DB->mysqlQuery($query, $_GET['address'], $_GET['secret']));
-if (!$q) {
+$paymentData = _getPaymentDataBySecretAndAddress($_GET['secret'], $_GET['address']);
+
+if (empty($paymentData)) {
 	logTransaction($gateway['name'], $_GET, 'No transaction found');
 	exit('No transaction found');
-}
-
-// Check invoice status
-$invoice = $DB->fetch_assoc($DB->mysqlQuery('SELECT * FROM tblinvoices WHERE id=%s', $q['invoice_id']));
-if ($invoice['status'] != 'Unpaid') {
-	exit('*ok*');
-}
-
-// Check transaction hash
-if ($DB->fetch_assoc($DB->mysqlQuery('SELECT transid FROM tblaccounts WHERE transid=%s', $_GET['transaction_hash']))) {
-	exit('*ok*');
 }
 
 // Check amount in BTC
 $valueSatoshi = $_GET['value'];
 $valueBTC = $valueSatoshi / 100000000;
-if ($valueBTC < $q['amount']) {
+
+if ($valueBTC < $paymentData['amount']) {
 	logTransaction($gateway['name'], $_GET, 'Invalid amount received');
 	exit('Invalid amount');
 }
 
 // Check address
-if ($_GET['address'] !== $gateway['receiving_address']) {
+if ($_GET['address'] != $paymentData['address']) {
 	logTransaction($gateway['name'], $_GET, 'Invalid receiving address');
 	exit('Invalid address');
 }
 
+// Check invoice status
+$invoice = _getWHMCSInvoice($paymentData['invoice_id']);
+$invoiceStatus = !empty($invoice['status'])
+	? $invoice['status']
+	: False;
+
+if ($invoiceStatus == 'Paid') {
+	exit('*ok*');
+}
+
+// Check transaction hash
+$transId = _getWHMCSTransId($_GET['transaction_hash']);
+
+if (!empty($transId)) {
+	exit('*ok*');
+}
+
 // Accept order
 $status = 'confirming';
-if (!$gateway['confirmations_required'] || $_GET['confirmations'] >= $gateway['confirmations_required']) {
+
+if ($_GET['confirmations'] >= $gateway['confirmations_required']) {
 	$status = 'paid';
-	addInvoicePayment($q['invoice_id'], $_GET['input_transaction_hash'], $invoice['total'], 0, $gatewayModule);
-
-	$order["orderid"] = Capsule::table('tblclients')->where('invoiceid', $q['invoice_id'])->value('id');
-	$order["autosetup"] = true;
-	$order["sendemail"] = true;
-	$results = localAPI("acceptorder", $order, $gateway['whmcs_admin']);
-
+	addInvoicePayment($paymentData['invoice_id'], $_GET['transaction_hash'], $invoice['total'], 0, $gatewayModule);
 	logTransaction($gateway['name'], $_GET, "Payment recieved");
 	echo '*ok*';
 }
 
 // Update confirmations
-$DB->mysqlQuery('UPDATE blockchain_payments SET confirmations=%s,status=%s WHERE invoice_id=%s', $_GET['confirmations'], $status, $q['invoice_id']);
+_setConfirmationsAndStatus($paymentData['invoice_id'], $_GET['confirmations'], $status);
