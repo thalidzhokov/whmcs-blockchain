@@ -10,11 +10,9 @@ require_once __DIR__ . '/../blockchain/Blockchain_Helpers.php';
 
 $gatewayModule = basename(__FILE__, '.php');
 $gateway = getGatewayVariables($gatewayModule);
-
 if (!$gateway['type']) {
 	die("Module Not Activated");
 }
-
 /*
 
 hash - The block hash.
@@ -31,7 +29,7 @@ if (empty($_GET['secret']) ||
 	empty($_GET['address']) ||
 	empty($_GET['transaction_hash']) ||
 	empty($_GET['value']) ||
-	empty($_GET['confirmations'])
+	!isset($_GET['confirmations'])
 ) {
 	logTransaction($gateway['name'], $_GET, 'No address or secret');
 	exit('No secret, address or other data');
@@ -67,6 +65,7 @@ $invoiceStatus = !empty($invoice['status'])
 	: False;
 
 if ($invoiceStatus == 'Paid') {
+	logTransaction($gateway['name'], $_GET, "Invoice status Paid *ok*");
 	exit('*ok*');
 }
 
@@ -74,6 +73,7 @@ if ($invoiceStatus == 'Paid') {
 $transId = _getWHMCSTransId($_GET['transaction_hash']);
 
 if (!empty($transId)) {
+	logTransaction($gateway['name'], $_GET, "Transaction Hash *ok*");
 	exit('*ok*');
 }
 
@@ -88,4 +88,5 @@ if ($_GET['confirmations'] >= $gateway['confirmations_required']) {
 }
 
 // Update confirmations
+$status != 'paid' && logTransaction($gateway['name'], $_GET, "Confirming");
 _setConfirmationsAndStatus($paymentData['invoice_id'], $_GET['confirmations'], $status);
