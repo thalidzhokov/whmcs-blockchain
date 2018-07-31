@@ -7,14 +7,6 @@ require_once __DIR__ . '/../../includes/invoicefunctions.php';
 require_once __DIR__ . '/blockchain/Blockchain_DB.php';
 require_once __DIR__ . '/blockchain/Blockchain_Helpers.php';
 
-
-$gatewayModule = basename(__FILE__, '.php');
-$gateway = getGatewayVariables($gatewayModule);
-
-if (!$gateway['type']) {
-	die("Module Not Activated");
-}
-
 // FUNCTIONS
 /**
  * @return array
@@ -52,7 +44,8 @@ function blockchain_config()
  */
 function blockchain_link($params)
 {
-	global $gateway;
+	$gatewayModule = basename(__FILE__, '.php');
+	$gateway = getGatewayVariables($gatewayModule);
 
 	_createTable();
 
@@ -114,6 +107,8 @@ function blockchain_link($params)
 
 // SHOW INVOICE
 if ($_GET['show'] && is_numeric($_GET['show'])) {
+	$gatewayModule = basename(__FILE__, '.php');
+	$gateway = getGatewayVariables($gatewayModule);
 	$paymentData = _getPaymentDataByInvoiceId($_GET['show']);
 
 	// QR code string for BTC wallet apps
