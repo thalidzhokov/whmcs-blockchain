@@ -44,6 +44,7 @@ class Blockchain_DB
 			for ($i = 1; $i <= $argcount - 1; $i++) {
 				$args[$i] = $args[$i] == 'NULL' ? 'NULL' : $this->quote_smart($args[$i]);
 			}
+
 			$query = vsprintf($query, $args);
 		}
 
