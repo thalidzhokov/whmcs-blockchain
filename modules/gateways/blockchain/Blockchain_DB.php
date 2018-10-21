@@ -1,5 +1,7 @@
 <?php
 
+require_once (__DIR__ . "/../../../configuration.php");
+
 /**
  * Class Blockchain_DB
  */
@@ -17,8 +19,8 @@ class Blockchain_DB
 	 */
 	function __construct()
 	{
-		include __DIR__ . "/../../../configuration.php";
 		global $db_host, $db_username, $db_password, $db_name;
+
 		$this->db_host = $db_host;
 		$this->db_username = $db_username;
 		$this->db_password = $db_password;
@@ -33,20 +35,25 @@ class Blockchain_DB
 	public function mysqlQuery($query)
 	{
 		$argcount = func_num_args();
+
 		if ($argcount > 1) {
 			$args = func_get_args();
+
 			unset($args[0]);
+
 			for ($i = 1; $i <= $argcount - 1; $i++) {
 				$args[$i] = $args[$i] == 'NULL' ? 'NULL' : $this->quote_smart($args[$i]);
 			}
 			$query = vsprintf($query, $args);
 		}
+
 		$result = mysqli_query($this->db_link, $query);
 		$err = mysqli_errno($this->db_link);
 
 		if ($err === 2006 || $err === 2013) {
 			//RECONNECT TO THE MYSQL DB
 			$this->db_link = mysqli_connect($this->db_host, $this->db_username, $this->db_password, $this->db_name);
+
 			return $this->mysqlQuery($query);
 		}
 
@@ -72,6 +79,7 @@ class Blockchain_DB
 		if (get_magic_quotes_gpc()) {
 			$value = stripslashes($value);
 		}
+
 		// Quote if not a number or a numeric string
 		if (!is_numeric($value)) {
 			$value = "'" . mysqli_real_escape_string($this->db_link, $value) . "'";
