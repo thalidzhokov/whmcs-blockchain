@@ -132,7 +132,7 @@ if ($_GET['show'] && is_numeric($_GET['show'])) {
 	<div id="qr-canvas"></div>
 
 	Please send <a id="qr-string" href="<?= $qrString; ?>"><?= $paymentData['amount']; ?> BTC</a> to address<br>
-	<a href="https://www.blockchain.info/address/<?= $paymentData['address']; ?>"
+	<a href="https://www.blockchain.info/btc/address/<?= $paymentData['address']; ?>"
 	   target="_blank"><?= $paymentData['address']; ?></a>
 
 	<script type="text/javascript">
